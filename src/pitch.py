@@ -1,6 +1,10 @@
-# TODO:
-# 1. Autocorrelation
-# 2. HPS
+# Here we implement and compare two methods for detecting the fundamental
+# frequency (F0) of a monophonic signal:
+# 1. Autocorrelation - looks for periodicity of the signal in the time domain.
+# 2. HPS (Harmonic Product Spectrum) - uses the fact that harmonics are
+#    integer multiples of the fundamental frequency, so multiplying
+#    "compressed" copies of the spectrum makes the fundamental frequency
+#    stand out as the strongest peak.
 
 import numpy as np
 
@@ -33,11 +37,25 @@ def autocorrelation(signal):
 
     return r
 
-# Detect the fundamental frequency using the autocorrelation method
+# Parabolic interpolation around the peak for a more precise period estimate.
+# Parabolic interpolation is a numerical optimization technique that fits a
+# second-order polynomial (a parabola) through three points to estimate a
+# function's maximum or minimum.
+def _parabolic_interpolation(r, lag):
+
+    if lag <= 0 or lag >= len(r) - 1:
+        return float(lag)
+    a, b, c = r[lag - 1], r[lag], r[lag + 1]
+    denom = a - 2 * b + c
+    if denom == 0:
+        return float(lag)
+    shift = 0.5 * (a - c) / denom
+    return lag + shift
+
+# Detect the fundamental frequency using the autocorrelation method.
 # Looks for the largest autocorrelation peak within the lag range that
 # corresponds to the allowed frequency range [fmin, fmax], then converts
-# it to a frequency:
-# f = Fs / lag
+# it to a frequency: f = Fs / lag
 def detect_pitch_autocorrelation(signal, Fs, fmin=50, fmax=2000, interpolation=True):
 
     r = autocorrelation(signal)
@@ -55,10 +73,55 @@ def detect_pitch_autocorrelation(signal, Fs, fmin=50, fmax=2000, interpolation=T
     lag = min_lag + int(np.argmax(segment))
 
     if interpolation:
-        # TODO - add parabolic interpolation
-        None
+        lag = _parabolic_interpolation(r, lag)
 
     if lag == 0:
         return None
     
     return Fs / lag
+
+# Compute the Harmonic Product Spectrum of the signal:
+# 1. Compute the magnitude spectrum |FFT(x)|.
+# 2. For each harmonic h = 2, 3, ..., n, build a "compressed" version of
+#    the spectrum (taking every h-th element) and multiply it into the
+#    original.
+# 3. Wherever the harmonics of the fundamental frequency line up, the
+#    product produces a pronounced peak at the fundamental frequency.
+# Returns (freqs, hps), where hps is defined over positive frequencies.
+def harmonic_product_spectrum(signal, Fs, num_harmonics=5):
+
+    N = len(signal)
+    spectrum = np.abs(np.fft.rfft(signal))
+    freqs = np.fft.rfftfreq(N, 1.0 / Fs)
+
+    hps = spectrum.copy()
+    for h in range(2, num_harmonics + 1):
+        compressed = spectrum[::h]              # every h-th element
+        hps[:len(compressed)] *= compressed     # multiply by the "compressed" spectrum
+
+    return freqs, hps
+
+# Detect the fundamental frequency using the HPS method
+def detect_pitch_hps(signal, Fs, num_harmonics=5, fmin=50, fmax=2000):
+
+    freqs, hps = harmonic_product_spectrum(signal, Fs, num_harmonics)
+
+    # Restrict the search to the allowed frequency range
+    mask = (freqs >= fmin) & (freqs <= fmax)
+    if not np.any(mask):
+        return None
+
+    indices = np.where(mask)[0]
+    strongest = indices[np.argmax(hps[indices])]
+    return freqs[strongest]
+
+# Helper function for evaluation
+def errors(measured, true):
+
+    measured = np.asarray(measured, dtype=float)
+    true = np.asarray(true, dtype=float)
+
+    mae = np.mean(np.abs(measured - true))
+    rmse = np.sqrt(np.mean((measured - true) ** 2))
+
+    return mae, rmse
