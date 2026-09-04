@@ -28,7 +28,7 @@ The `data/` folder contains two`.wav` recordings:
 | File | Sample rate | Duration | Samples | Used in |
 |---|---|---|---|---|
 | `piano.wav` | 44100 Hz | 5.05 s | 222,821 | notebooks 02, 03, 04 |
-| `guitar.wav` | 44100 Hz | 5.05 s | 222,821 | demo |
+| `guitar.wav` | 44100 Hz | 5.05 s | 222,821 | demo 05 |
 
 They are mono after loading, and `load_wav()` normalizes amplitudes to [-1, 1] as `float64`. They come from the course exercise repository `NI-2025` (`05-furijeova-transformacija/data/`.
 
@@ -52,6 +52,14 @@ Autocorrelation is roughly 50x more accurate here, because it is not limited by 
 
 **Limits on real audio.** On `piano.wav`, the two pitch methods disagree (~96.8 Hz / G2 vs 220.0 Hz / A3). This is an octave-type error, made messier by the inharmonicity of real piano strings, and is discussed in notebook 03.
 
+## Demo
+
+Notebook `05_demo.ipynb` opens a small desktop window (Tkinter) that runs the
+whole pipeline interactively: pick one of the example sounds (piano, guitar,
+or a synthetic A minor / C major chord) or load your own `.wav`, and it shows
+the detected pitch (both methods), the dominant chord, and the waveform,
+spectrogram and chromagram.
+
 ## Repository structure
 
 ```
@@ -73,6 +81,7 @@ fft-music-analysis/
     ├── 02_stft_spectrogram.ipynb
     ├── 03_pitch_detection.ipynb
     └── 04_chord_detection.ipynb
+    └── 05_demo.ipynb              # Interactive Tkinter demo (audio -> notes & chords)
 ```
 
 ## Setup
