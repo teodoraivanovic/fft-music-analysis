@@ -71,13 +71,13 @@ fft-music-analysis/
 │   ├── guitar.wav
 ├── src/                           # Reusable code, imported by the notebooks
 │   ├── common.py                  # Shared module: notes <-> frequency, synthetic signals, .wav, plotting
-│   ├── fft_scratch.py             # DFT, FFT, IFFT
+│   ├── fft.py             # DFT, FFT, IFFT
 │   ├── stft.py                    # STFT, spectrogram, windows
 │   ├── pitch.py                   # Autocorrelation, HPS, MAE/RMSE
 │   └── chroma.py                  # Chromagram, chord templates, detection
 └── notebooks/
     ├── 00_test_common.ipynb       # Testing notebook for the shared module
-    ├── 01_fft_from_scratch.ipynb
+    ├── 01_dft_fft.ipynb
     ├── 02_stft_spectrogram.ipynb
     ├── 03_pitch_detection.ipynb
     └── 04_chord_detection.ipynb
